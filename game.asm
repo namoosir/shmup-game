@@ -34,7 +34,7 @@
 ######################################################################
 
 .eqv	BASE_ADDRESS	0x10008000
-.eqv	SLEEP_TIME	40
+.eqv	SLEEP_TIME	70
 
 .data
 lives:	.word	3
