@@ -34,11 +34,24 @@
 ######################################################################
 
 .eqv	BASE_ADDRESS	0x10008000
-.eqv	SLEEP_TIME	70
+.eqv	SLEEP_TIME	80
+.eqv	SHIP_LEN	80
+.eqv	OBS1_LEN	40
 
 .data
-lives:	.word	3
-ship:	.word	0xff0000
+# miscellaneous
+lives:		.word	3
+
+# ship
+ship:		.word	0, 0xffffff, 124, 0xffffff, 4, 0x5c8ab5, 4, 0x5c8ab5, 4, 0xffffff, 116, 0xffffff, 4, 0x5c8ab5, 4, 0x5c8ab5, 4, 0xffffff, 120, 0xffffff
+currShipLoc:	.word	1812
+newShipLoc:	.word	1812
+
+# obstacle1
+obs1:		.word	0, 0x9a9fb3, 124, 0x9a9fb3, 4, 0x797b85, 4, 0x9a9fb3, 124, 0x9a9fb3
+currObs1Loc:	.word	1276
+newObs1Loc:	.word	1272
+
 
 
 .text
@@ -136,37 +149,63 @@ collision_check:
 eraseall:
 	li $t0, BASE_ADDRESS	# get base address of display
 	li $t1, 0		# index
-	li $t2, 4		# increment
-	li $t3, 16384		# total length
+	
+	la $t2, currShipLoc	# get current ship location
+	lw $t2, ($t2)
+	la $t9, newShipLoc	# get new ship location
+	lw $t9, ($t9)
+	
+	beq $t2, $t9, noShipErase	# no need to erase ship if it is in the same position
+	
+	add $t5, $t0, $t2	# calculate offset to erase ship
+	
+	la $t3, ship		# get address of ship
+	li $t4, SHIP_LEN	# get length of ship array
+	
 
-# loop through all elements
-erase:
-	add $t4, $t0, $t1	# calculate offset
-	sw $0, ($t4)		# store 0 into array
+# erases the ship
+eraseShip:
+	add $t6, $t1, $t3	# calculate offset
+	lw $t7, ($t6)		# get pixel location
 	
-	add $t1, $t1, $t2	# update index
-	bne $t3, $t1, erase	# looping condition
+	add $t5, $t5, $t7	# get offset for pixel array
+	sw $0, ($t5)		# store 0 into array
 	
+	addi $t1, $t1, 8		# update index
+	bne $t4, $t1, eraseShip		# looping condition
+
+# continue erasing other things
+noShipErase:
 	jr $ra			# return
 	
 # draw function
 draw:
 	li $t0, BASE_ADDRESS	# get the base address
-	li $t1, 0xffffff	# get the color white
-	li $t2, 0x5c8ab5	# get another color
+	la $t1, newShipLoc	# get the new location of the ship
+	lw $t2, ($t1)
 	
-	sw $t1, 1812($t0)	
-	sw $t1, 1936($t0)
-	sw $t2, 1940($t0)
-	sw $t2, 1944($t0)
-	sw $t1, 1948($t0)
-	sw $t1, 2064($t0)
-	sw $t2, 2068($t0)
-	sw $t2, 2072($t0)
-	sw $t1, 2076($t0)
-	sw $t1, 2196($t0)
+	la $t3, currShipLoc	# get current location of ship
+	sw $t2, ($t3)		# set current location of ship to be the new location of ship
 	
+	add $t0, $t0, $t2	# calculate offset
 	
+	li $t2, SHIP_LEN	# get length of ship array
+	la $t4, ship		# get address of ship array
+	
+	li $t7, 0		# set index
+
+# draws the ship
+shipLoop:
+	add $t8, $t4, $t7	# offset for ship array
+	lw $t5, ($t8)		# location of pixel
+	lw $t6, 4($t8)		# color of pixel
+	
+	add $t0, $t0, $t5	# calculate offset for pixel array
+	sw $t6, ($t0)		# set color of pixel
+	
+	addi $t7, $t7, 8	# update index
+	bne $t7, $t2, shipLoop	# looping condition	
+
 	jr $ra			# return
 
 # end the program
