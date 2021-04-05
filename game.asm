@@ -47,10 +47,10 @@ ship:		.word	0, 0xffffff, 124, 0xffffff, 4, 0x5c8ab5, 4, 0x5c8ab5, 4, 0xffffff, 
 currShipLoc:	.word	1812
 newShipLoc:	.word	1812
 
-# obstacle1
+# obstacle 1
 obs1:		.word	0, 0x9a9fb3, 124, 0x9a9fb3, 4, 0x797b85, 4, 0x9a9fb3, 124, 0x9a9fb3
-currObs1Loc:	.word	1276
-newObs1Loc:	.word	1272
+currObs1Loc:	.word	0
+newObs1Loc:	.word	0
 
 
 
@@ -100,8 +100,36 @@ main_loop:
 ######################################################################
 
 # updates location of obstacles
-obstacles:
+obstacles:	
+	la $t0, currObs1Loc	# get current location of obstacle 1
+	lw $t1, ($t0)
 	
+	li $t2, 128		# divide and get the remainder
+	div $t1, $t2
+	mfhi $t3
+	
+	beq $t3, $0, getNew	# obstacle out of screen, generate new one
+	
+	subi $t1, $t1, 4	# update the current location
+	
+	la $t2, newObs1Loc	# get new location of obstacle 1
+	sw $t1, ($t2)		# set new location to the updated current location
+	
+# generate new obstacles	
+getNew:
+	li $v0, 42		# randomly generate location of obstacle 1
+	li $a0, 0
+	li $a1, 31
+	move $t5, $a1
+	li $t9, 4
+	mult $t5, $t9
+	mflo $t5
+	li $t9, 128
+	mult $t5, $t9
+	mflo $t5
+	subi $t5, $t5, 4
+	
+	move $t2, $t5		# set the new location	
 	jr $ra			# return
 
 # checks if a key has been pressed
@@ -169,13 +197,32 @@ eraseShip:
 	lw $t7, ($t6)		# get pixel location
 	
 	add $t5, $t5, $t7	# get offset for pixel array
-	sw $0, ($t5)		# store 0 into array
+	sw $0, ($t5)		# store 0 into array to erase
 	
 	addi $t1, $t1, 8		# update index
 	bne $t4, $t1, eraseShip		# looping condition
 
 # continue erasing other things
 noShipErase:
+	la $t1, currObs1Loc	# get current location of obstacle 1
+	lw $t1, ($t1)
+	la $t2, obs1		# get obstacle 1
+	
+	add $t3, $t1, $t0	# calculate offset to erase obstacle 1
+	li $t4, OBS1_LEN	# get length of obs1
+	
+	li $t5, 0		# index
+	
+eraseObs1:
+	add $t6, $t5, $t2	# calculate offset
+	lw $t7, ($t6)		# get pixel location
+	
+	add $t3, $t3, $t7	# get offset for pixel array
+	sw $0, ($t3)		# store 0 to erase
+	
+	addi $t5, $t5, 8		# update index
+	bne $t4, $t5, eraseObs1		# looping condition
+	
 	jr $ra			# return
 	
 # draw function
@@ -206,7 +253,36 @@ shipLoop:
 	addi $t7, $t7, 8	# update index
 	bne $t7, $t2, shipLoop	# looping condition	
 
+	li $t0, BASE_ADDRESS	# get the base address
+	la $t1, newObs1Loc	# get the new location of the obstacle
+	lw $t2, ($t1)
+	
+	la $t3, currObs1Loc	# get the current location of the obstacle
+	sw $t2, ($t3)		# set current location of the obstacle to be the new location of the obstacle
+	
+	add $t4, $t0, $t2	# calculate offset
+	
+	la $t5, obs1		# get obstacle 1
+	li $t6, OBS1_LEN	# get the length of obstacle 1 array
+	
+	li $t7, 0		# set index
+	
+obs1Loop:
+	add $t8, $t4, $t7	# offset for obstacle 1 array
+	lw $t9, ($t8)		# location of pixel
+	lw $t1, 4($t8)		# color of pixel
+	
+	add $t4, $t4, $t9	# calculate offset for pixel array
+	sw $t1, ($t4)		# set color of pixel
+	
+	addi $t7, $t7, 8	# update index
+	bne $t7, $t6, obs1Loop	# looping condition
+	
+	
+	
 	jr $ra			# return
+
+	
 
 # end the program
 end:
