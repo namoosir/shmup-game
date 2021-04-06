@@ -90,8 +90,7 @@ main_loop:
 	
 	sub $s0, $s0, $v0	# update number of lives
 	
-	move $a1, $v0		# update parameters of eraseall
-	move $a2, $s0
+	move $a1, $v0		# update parameter of eraseall
 	jal eraseall		# erase everything on the screen
 	
 	move $a1, $s0		# update parameter of draw
@@ -825,7 +824,8 @@ returnDraw:
 
 	
 
-# end the program
+# game over
 end:
+	
 	li $v0, 10
 	syscall
