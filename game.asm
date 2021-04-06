@@ -90,7 +90,11 @@ main_loop:
 	
 	sub $s0, $s0, $v0	# update number of lives
 	
+	move $a1, $v0		# update parameters of eraseall
+	move $a2, $s0
 	jal eraseall		# erase everything on the screen
+	
+	move $a1, $s0		# update parameter of draw
 	jal draw		# draw everything
 	
 	
@@ -160,7 +164,7 @@ check2:
 	j  check3		# check next obstacle
 
 getNew2:
-	li $v0, 42		# randomly generate location of obstacle 1
+	li $v0, 42		# randomly generate location of obstacle 2
 	li $a0, 0
 	li $a1, 28
 	syscall
@@ -329,27 +333,27 @@ obs1ColLoop:
 	lw $t7, ($t4)		# get location of pixel of obstacle
 	add $t7, $t7, $t3	# add offset
 	
-	beq $t6, $t7, collided	# collision occured
+	beq $t6, $t7, collided1	# collision occured
 	
 	lw $t8, 8($t4)		# get next pixel position
 	add $t7, $t7, $t8	# add offset
 	
-	beq $t6, $t7, collided	# collision occured
+	beq $t6, $t7, collided1	# collision occured
 	
 	lw $t8, 16($t4)		# get next pixel position
 	add $t7, $t7, $t8	# add offset
 	
-	beq $t6, $t7, collided	# collision occured
+	beq $t6, $t7, collided1	# collision occured
 	
 	lw $t8, 24($t4)		# get next pixel position
 	add $t7, $t7, $t8	# add offset
 	
-	beq $t6, $t7, collided	# collision occured
+	beq $t6, $t7, collided1	# collision occured
 	
 	lw $t8, 32($t4)		# get next pixel position
 	add $t7, $t7, $t8	# add offset
 	
-	beq $t6, $t7, collided	# collision occured
+	beq $t6, $t7, collided1	# collision occured
 	
 	addi $t5, $t5, 8		# update index
 	bne $t5, $t2, obs1ColLoop	# looping condition
@@ -375,27 +379,27 @@ obs2ColLoop:
 	lw $t7, ($t4)		# get location of pixel of obstacle
 	add $t7, $t7, $t3	# add offset
 	
-	beq $t6, $t7, collided	# collision occured
+	beq $t6, $t7, collided2	# collision occured
 	
 	lw $t8, 8($t4)		# get next pixel position
 	add $t7, $t7, $t8	# add offset
 	
-	beq $t6, $t7, collided	# collision occured
+	beq $t6, $t7, collided2	# collision occured
 	
 	lw $t8, 16($t4)		# get next pixel position
 	add $t7, $t7, $t8	# add offset
 	
-	beq $t6, $t7, collided	# collision occured
+	beq $t6, $t7, collided2	# collision occured
 	
 	lw $t8, 24($t4)		# get next pixel position
 	add $t7, $t7, $t8	# add offset
 	
-	beq $t6, $t7, collided	# collision occured
+	beq $t6, $t7, collided2	# collision occured
 	
 	lw $t8, 32($t4)		# get next pixel position
 	add $t7, $t7, $t8	# add offset
 	
-	beq $t6, $t7, collided	# collision occured
+	beq $t6, $t7, collided2	# collision occured
 	
 	addi $t5, $t5, 8		# update index
 	bne $t5, $t2, obs2ColLoop	# looping condition
@@ -421,44 +425,157 @@ obs3ColLoop:
 	lw $t7, ($t4)		# get location of pixel of obstacle
 	add $t7, $t7, $t3	# add offset
 	
-	beq $t6, $t7, collided	# collision occured
+	beq $t6, $t7, collided3	# collision occured
 	
 	lw $t8, 8($t4)		# get next pixel position
 	add $t7, $t7, $t8	# add offset
 	
-	beq $t6, $t7, collided	# collision occured
+	beq $t6, $t7, collided3	# collision occured
 	
 	lw $t8, 16($t4)		# get next pixel position
 	add $t7, $t7, $t8	# add offset
 	
-	beq $t6, $t7, collided	# collision occured
+	beq $t6, $t7, collided3	# collision occured
 	
 	lw $t8, 24($t4)		# get next pixel position
 	add $t7, $t7, $t8	# add offset
 	
-	beq $t6, $t7, collided	# collision occured
+	beq $t6, $t7, collided3	# collision occured
 	
 	lw $t8, 32($t4)		# get next pixel position
 	add $t7, $t7, $t8	# add offset
 	
-	beq $t6, $t7, collided	# collision occured
+	beq $t6, $t7, collided3	# collision occured
 	
 	addi $t5, $t5, 8		# update index
 	bne $t5, $t2, obs3ColLoop	# looping condition
 	
-collided:
-	li $v0, 1
+	li $v0, 0
+	jr $ra 			# return no collision
 	
-	#############
+collided1:	
+	li $v0, 42		# randomly generate location of obstacle 1
+	li $a0, 0
+	li $a1, 28
+	syscall
 	
+	move $t5, $a0		# process the number so it is a proper location
+	addi $t5, $t5, 2
+	li $t2, 128
+	mult $t5, $t2
+	mflo $t5
+	subi $t5, $t5, 12
 	
-	 
+	la $t2, newObs1Loc	# set the new location
+	sw $t5, ($t2)
+	
+	li $t6, 0xff0000	# get the color red
+	li $t7, BASE_ADDRESS	# get the base address
+	sw $t6, ($t7)		# paint the corners red
+	sw $t6, 4($t7)
+	sw $t6, 128($t7)
+	sw $t6, 120($t7)
+	sw $t6, 124($t7)
+	sw $t6, 252($t7)
+	sw $t6, 3840($t7)
+	sw $t6, 3968($t7)
+	sw $t6, 3972($t7)
+	sw $t6, 3964($t7)
+	sw $t6, 4088($t7)
+	sw $t6, 4092($t7)
+	
+	li $v0, 1		# return 1 since collision happened
+	jr $ra			# return
+	
+collided2:	
+	li $v0, 42		# randomly generate location of obstacle 2
+	li $a0, 0
+	li $a1, 28
+	syscall
+	
+	move $t5, $a0		# process the number so it is a proper location
+	addi $t5, $t5, 2
+	li $t2, 128
+	mult $t5, $t2
+	mflo $t5
+	subi $t5, $t5, 12
+	
+	la $t2, newObs2Loc	# set the new location
+	sw $t5, ($t2)
+	
+	li $t6, 0xff0000	# get the color red
+	li $t7, BASE_ADDRESS	# get the base address
+	sw $t6, ($t7)		# paint the corners red
+	sw $t6, 4($t7)
+	sw $t6, 128($t7)
+	sw $t6, 120($t7)
+	sw $t6, 124($t7)
+	sw $t6, 252($t7)
+	sw $t6, 3840($t7)
+	sw $t6, 3968($t7)
+	sw $t6, 3972($t7)
+	sw $t6, 3964($t7)
+	sw $t6, 4088($t7)
+	sw $t6, 4092($t7)
+	
+	li $v0, 1		# return 1 since collision happened
+	jr $ra 			# return
+	
+collided3:
+	li $v0, 42		# randomly generate location of obstacle 1
+	li $a0, 0
+	li $a1, 28
+	syscall
+	
+	move $t5, $a0		# process the number so it is a proper location
+	addi $t5, $t5, 2
+	li $t2, 128
+	mult $t5, $t2
+	mflo $t5
+	subi $t5, $t5, 12
+	
+	la $t2, newObs3Loc	# set the new location
+	sw $t5, ($t2)
+	
+	li $t6, 0xff0000	# get the color red
+	li $t7, BASE_ADDRESS	# get the base address
+	sw $t6, ($t7)		# paint the corners red
+	sw $t6, 4($t7)
+	sw $t6, 128($t7)
+	sw $t6, 120($t7)
+	sw $t6, 124($t7)
+	sw $t6, 252($t7)
+	sw $t6, 3840($t7)
+	sw $t6, 3968($t7)
+	sw $t6, 3972($t7)
+	sw $t6, 3964($t7)
+	sw $t6, 4088($t7)
+	sw $t6, 4092($t7)
+	
+	li $v0, 1		# return 1 since collision happened
 	jr $ra			# return
 
 
 # erase everything on the screen
 eraseall:
 	li $t0, BASE_ADDRESS	# get base address of display
+	
+	bne $0, $a1, noEraseCorner
+	
+	sw $0, ($t0)
+	sw $0, 4($t0)
+	sw $0, 128($t0)
+	sw $0, 120($t0)
+	sw $0, 124($t0)
+	sw $0, 252($t0)
+	sw $0, 3840($t0)
+	sw $0, 3968($t0)
+	sw $0, 3972($t0)
+	sw $0, 3964($t0)
+	sw $0, 4088($t0)
+	sw $0, 4092($t0)
+
+noEraseCorner:
 	li $t1, 0		# index
 	
 	la $t2, currShipLoc	# get current ship location
@@ -549,6 +666,12 @@ eraseObs3:
 	
 	addi $t5, $t5, 8		# update index
 	bne $t4, $t5, eraseObs3		# looping condition
+	
+	li $t0, BASE_ADDRESS	# get base address
+	
+	sw $0, 3896($t0)	# erase the health bar
+	sw $0, 3900($t0)
+	sw $0, 3904($t0)
 	
 	jr $ra			# return
 	
@@ -661,6 +784,43 @@ obs3Loop:
 	addi $t7, $t7, 8	# update index
 	bne $t7, $t6, obs3Loop	# looping condition
 	
+	
+	li $t7, 3
+	beq $a1, $t7, health3	# if health is 3
+	
+	li $t7, 2
+	beq $a1, $t7, health2	# if health is 2
+	
+	li $t7, 1
+	beq $a1, $t7, health1	# if health is 1
+	
+	j returnDraw		# return
+	
+health3:
+	li $t0, BASE_ADDRESS	# get base address
+	li $t1, 0x00ff00	# get green color
+	
+	sw $t1, 3896($t0)
+	sw $t1, 3900($t0)
+	sw $t1, 3904($t0)
+	j returnDraw
+	
+health2:
+	li $t0, BASE_ADDRESS	# get base address
+	li $t1, 0x00ff00	# get green color
+	
+	sw $t1, 3896($t0)
+	sw $t1, 3900($t0)
+	j returnDraw
+	
+health1:
+	li $t0, BASE_ADDRESS	# get base address
+	li $t1, 0x00ff00	# get green color
+	
+	sw $t1, 3896($t0)
+	j returnDraw
+	
+returnDraw:	
 	jr $ra			# return
 
 	
