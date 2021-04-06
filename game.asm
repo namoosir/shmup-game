@@ -34,7 +34,7 @@
 ######################################################################
 
 .eqv	BASE_ADDRESS	0x10008000
-.eqv	SLEEP_TIME	80
+.eqv	SLEEP_TIME	40
 .eqv	SHIP_LEN	80
 .eqv	OBS1_LEN	40
 
@@ -43,14 +43,22 @@
 lives:		.word	3
 
 # ship
-ship:		.word	0, 0xffffff, 124, 0xffffff, 4, 0x5c8ab5, 4, 0x5c8ab5, 4, 0xffffff, 116, 0xffffff, 4, 0x5c8ab5, 4, 0x5c8ab5, 4, 0xffffff, 120, 0xffffff
-currShipLoc:	.word	1812
-newShipLoc:	.word	1812
+ship:		.word	0, 0xffffff, -124, 0xffffff, 128, 0x5c8ab5, 4, 0x5c8ab5, 4, 0xffffff, 116, 0xffffff, 4, 0x5c8ab5, 4, 0x5c8ab5, 4, 0xffffff, 120, 0xffffff
+currShipLoc:	.word	1936
+newShipLoc:	.word	1936
 
 # obstacle 1
-obs1:		.word	0, 0x9a9fb3, 124, 0x9a9fb3, 4, 0x797b85, 4, 0x9a9fb3, 124, 0x9a9fb3
+obs1:		.word	0, 0x9a9fb3, -124, 0x9a9fb3, 128, 0x58595e, 4, 0x9a9fb3, 124, 0x9a9fb3
 currObs1Loc:	.word	0
 newObs1Loc:	.word	0
+
+# obstacle 2
+currObs2Loc: 	.word	0
+newObs2Loc: 	.word	0
+
+# obstacle 3
+currObs3Loc: 	.word	0
+newObs3Loc: 	.word 	0
 
 
 
@@ -62,7 +70,7 @@ main:
 	li $t0, BASE_ADDRESS	# get base address of display
 	li $t1, 0		# index
 	li $t2, 4		# increment
-	li $t3, 16384		# total length
+	li $t3, 4096		# total length
 	
 clear:
 	add $t4, $t0, $t1	# calculate offset
@@ -108,28 +116,98 @@ obstacles:
 	div $t1, $t2
 	mfhi $t3
 	
-	beq $t3, $0, getNew	# obstacle out of screen, generate new one
+	beq $t3, $0, getNew1	# obstacle out of screen, generate new one
 	
 	subi $t1, $t1, 4	# update the current location
 	
 	la $t2, newObs1Loc	# get new location of obstacle 1
 	sw $t1, ($t2)		# set new location to the updated current location
+	j  check2		# check next obstacle
 	
 # generate new obstacles	
-getNew:
+getNew1:
 	li $v0, 42		# randomly generate location of obstacle 1
 	li $a0, 0
-	li $a1, 31
-	move $t5, $a1
-	li $t9, 4
-	mult $t5, $t9
-	mflo $t5
-	li $t9, 128
-	mult $t5, $t9
-	mflo $t5
-	subi $t5, $t5, 4
+	li $a1, 28
+	syscall
 	
-	move $t2, $t5		# set the new location	
+	move $t5, $a0		# process the number so it is a proper location
+	addi $t5, $t5, 2
+	li $t2, 128
+	mult $t5, $t2
+	mflo $t5
+	subi $t5, $t5, 12
+	
+	la $t2, newObs1Loc	# set the new location
+	sw $t5, ($t2)
+
+check2:
+	la $t0, currObs2Loc	# get current location of obstacle 2
+	lw $t1, ($t0)
+	
+	li $t2, 128		# divide and get the remainder
+	div $t1, $t2
+	mfhi $t3
+	
+	beq $t3, $0, getNew2	# obstacle out of screen, generate new one
+	li $t9, 124
+	beq $t3, $t9, getNew2	# obstacle out of screen, generate new one
+	
+	subi $t1, $t1, 8	# update the current location
+	
+	la $t2, newObs2Loc	# get new location of obstacle 2
+	sw $t1, ($t2)		# set new location to the updated current location
+	j  check3		# check next obstacle
+
+getNew2:
+	li $v0, 42		# randomly generate location of obstacle 1
+	li $a0, 0
+	li $a1, 28
+	syscall
+	
+	move $t5, $a0		# process the number so it is a proper location
+	addi $t5, $t5, 2
+	li $t2, 128
+	mult $t5, $t2
+	mflo $t5
+	subi $t5, $t5, 12
+	
+	la $t2, newObs2Loc	# set the new location
+	sw $t5, ($t2)
+	
+check3:
+	la $t0, currObs3Loc	# get current location of obstacle 3
+	lw $t1, ($t0)
+	
+	li $t2, 128		# divide and get the remainder
+	div $t1, $t2
+	mfhi $t3
+	
+	beq $t3, $0, getNew3	# obstacle out of screen, generate new one
+	
+	subi $t1, $t1, 4	# update the current location
+	
+	la $t2, newObs3Loc	# get new location of obstacle 2
+	sw $t1, ($t2)		# set new location to the updated current location
+	j  returnObstacles	# return
+
+getNew3:
+	li $v0, 42		# randomly generate location of obstacle 1
+	li $a0, 0
+	li $a1, 28
+	syscall
+	
+	move $t5, $a0		# process the number so it is a proper location
+	addi $t5, $t5, 2
+	li $t2, 128
+	mult $t5, $t2
+	mflo $t5
+	subi $t5, $t5, 12
+	
+	la $t2, newObs3Loc	# set the new location
+	sw $t5, ($t2)
+
+returnObstacles:	
 	jr $ra			# return
 
 # checks if a key has been pressed
@@ -151,25 +229,230 @@ keypress:
 
 # updates location of ship if a is pressed
 respond_to_a:
+	la $t0, currShipLoc	# get current location of ship
+	lw $t1, ($t0)
+	
+	li $t2, 128		# divide and get the remainder
+	div $t1, $t2
+	mfhi $t3
+	
+	beq $t3, $0, a_return	# ship at left edge of screen
+	
+	subi $t1, $t1, 4	# update the location of ship
+	la $t0, newShipLoc
+	sw $t1, ($t0)
+
+# returns from a
+a_return:
 	jr $ra			# return
 
-# updates location of ship if a is pressed	
+# updates location of ship if d is pressed	
 respond_to_d:
-	jr $ra 			# return
+	la $t0, currShipLoc	# get current location of ship
+	lw $t1, ($t0)
+	
+	addi $t4, $t1, 16	# add 16 to get offset
+	li $t2, 128		# divide and get the remainder
+	div $t4, $t2
+	mfhi $t3
+	
+	beq $t3, $0, d_return	# ship at right edge of screen
+	
+	addi $t1, $t1, 4
+	la $t0, newShipLoc	# update the new location of the ship
+	sw $t1, ($t0)
 
-# updates location of ship if a is pressed	
+# returns from d
+d_return:
+	jr $ra			# return
+
+# updates location of ship if s is pressed	
 respond_to_s:
-	jr $ra 			# return
+	la $t0, currShipLoc	# get current location of ship
+	lw $t1, ($t0)
+	
+	addi $t4, $t1, 260	# add 260 to get offset
+	
+	li $t3, 3968
+	bge $t4, $t3, s_return	# ship at bottom edge of screen
+	
+	addi $t1, $t1, 128
+	la $t0, newShipLoc	# update the new location of the ship
+	sw $t1, ($t0)
 
-# updates location of ship if a is pressed
+# returns from s
+s_return:
+	jr $ra			# return
+	
+# updates location of ship if w is pressed
 respond_to_w:
-	jr $ra 			# return
+	la $t0, currShipLoc	# get current location of ship
+	lw $t1, ($t0)
+	
+	subi $t4, $t1, 124	# subtract 124 to get offset
+	
+	li $t3, 124
+	ble $t4, $t3, w_return	# ship at bottom edge of screen
+	
+	subi $t1, $t1, 128
+	la $t0, newShipLoc	# update the new location of the ship
+	sw $t1, ($t0)
 
+# returns from w
+w_return:
+	jr $ra			# return
+	
+
+# updates location of ship if p is pressed
 respond_to_p:
 	j main
 
 # checks for collisions, returns 1 if collided, 0 otherwise in $v0
 collision_check:
+	la $t0, newShipLoc	# get the ship location
+	lw $t0, ($t0)
+	la $t1, ship		# get the ship
+	li $t2, SHIP_LEN	# get the ship length
+	
+	la $t3, newObs1Loc	# get obstacle 1 location
+	lw $t3, ($t3)
+	la $t4, obs1		# get the obstacle
+	
+	li $t5, 0		# index
+
+# check if ship collided with obstacle 1
+obs1ColLoop:
+	add $t1, $t1, $t5	# calculate offset for array
+	lw $t6, ($t1)		# get location of pixel of ship
+	add $t6, $t6, $t0	# add offset
+	
+	lw $t7, ($t4)		# get location of pixel of obstacle
+	add $t7, $t7, $t3	# add offset
+	
+	beq $t6, $t7, collided	# collision occured
+	
+	lw $t8, 8($t4)		# get next pixel position
+	add $t7, $t7, $t8	# add offset
+	
+	beq $t6, $t7, collided	# collision occured
+	
+	lw $t8, 16($t4)		# get next pixel position
+	add $t7, $t7, $t8	# add offset
+	
+	beq $t6, $t7, collided	# collision occured
+	
+	lw $t8, 24($t4)		# get next pixel position
+	add $t7, $t7, $t8	# add offset
+	
+	beq $t6, $t7, collided	# collision occured
+	
+	lw $t8, 32($t4)		# get next pixel position
+	add $t7, $t7, $t8	# add offset
+	
+	beq $t6, $t7, collided	# collision occured
+	
+	addi $t5, $t5, 8		# update index
+	bne $t5, $t2, obs1ColLoop	# looping condition
+	
+	
+	la $t0, newShipLoc	# get the ship location
+	lw $t0, ($t0)
+	la $t1, ship		# get the ship
+	li $t2, SHIP_LEN	# get the ship length
+	
+	la $t3, newObs2Loc	# get obstacle 2 location
+	lw $t3, ($t3)
+	la $t4, obs1		# get the obstacle
+	
+	li $t5, 0		# index
+	
+# check if ship collided with obstacle 1
+obs2ColLoop:
+	add $t1, $t1, $t5	# calculate offset for array
+	lw $t6, ($t1)		# get location of pixel of ship
+	add $t6, $t6, $t0	# add offset
+	
+	lw $t7, ($t4)		# get location of pixel of obstacle
+	add $t7, $t7, $t3	# add offset
+	
+	beq $t6, $t7, collided	# collision occured
+	
+	lw $t8, 8($t4)		# get next pixel position
+	add $t7, $t7, $t8	# add offset
+	
+	beq $t6, $t7, collided	# collision occured
+	
+	lw $t8, 16($t4)		# get next pixel position
+	add $t7, $t7, $t8	# add offset
+	
+	beq $t6, $t7, collided	# collision occured
+	
+	lw $t8, 24($t4)		# get next pixel position
+	add $t7, $t7, $t8	# add offset
+	
+	beq $t6, $t7, collided	# collision occured
+	
+	lw $t8, 32($t4)		# get next pixel position
+	add $t7, $t7, $t8	# add offset
+	
+	beq $t6, $t7, collided	# collision occured
+	
+	addi $t5, $t5, 8		# update index
+	bne $t5, $t2, obs2ColLoop	# looping condition
+	
+	
+	la $t0, newShipLoc	# get the ship location
+	lw $t0, ($t0)
+	la $t1, ship		# get the ship
+	li $t2, SHIP_LEN	# get the ship length
+	
+	la $t3, newObs3Loc	# get obstacle 3 location
+	lw $t3, ($t3)
+	la $t4, obs1		# get the obstacle
+	
+	li $t5, 0		# index
+	
+# check if ship collided with obstacle 1
+obs3ColLoop:
+	add $t1, $t1, $t5	# calculate offset for array
+	lw $t6, ($t1)		# get location of pixel of ship
+	add $t6, $t6, $t0	# add offset
+	
+	lw $t7, ($t4)		# get location of pixel of obstacle
+	add $t7, $t7, $t3	# add offset
+	
+	beq $t6, $t7, collided	# collision occured
+	
+	lw $t8, 8($t4)		# get next pixel position
+	add $t7, $t7, $t8	# add offset
+	
+	beq $t6, $t7, collided	# collision occured
+	
+	lw $t8, 16($t4)		# get next pixel position
+	add $t7, $t7, $t8	# add offset
+	
+	beq $t6, $t7, collided	# collision occured
+	
+	lw $t8, 24($t4)		# get next pixel position
+	add $t7, $t7, $t8	# add offset
+	
+	beq $t6, $t7, collided	# collision occured
+	
+	lw $t8, 32($t4)		# get next pixel position
+	add $t7, $t7, $t8	# add offset
+	
+	beq $t6, $t7, collided	# collision occured
+	
+	addi $t5, $t5, 8		# update index
+	bne $t5, $t2, obs3ColLoop	# looping condition
+	
+collided:
+	li $v0, 1
+	
+	#############
+	
+	
+	 
 	jr $ra			# return
 
 
@@ -212,7 +495,8 @@ noShipErase:
 	li $t4, OBS1_LEN	# get length of obs1
 	
 	li $t5, 0		# index
-	
+
+# erase obstacle 1 COULD HAVE BUG SINCE CURRENT LOCATION STARTS OFF AT 0
 eraseObs1:
 	add $t6, $t5, $t2	# calculate offset
 	lw $t7, ($t6)		# get pixel location
@@ -222,6 +506,49 @@ eraseObs1:
 	
 	addi $t5, $t5, 8		# update index
 	bne $t4, $t5, eraseObs1		# looping condition
+	
+# start to erase obstacle 2
+	
+	la $t1, currObs2Loc	# get current location of obstacle 2
+	lw $t1, ($t1)
+	la $t2, obs1		# get obstacle 1
+	
+	add $t3, $t1, $t0	# calculate offset to erase obstacle 2
+	li $t4, OBS1_LEN	# get length of obs1
+	
+	li $t5, 0		# index
+
+# erase obstacle 2 COULD HAVE BUG SINCE CURRENT LOCATION STARTS OFF AT 0
+eraseObs2:
+	add $t6, $t5, $t2	# calculate offset
+	lw $t7, ($t6)		# get pixel location
+	
+	add $t3, $t3, $t7	# get offset for pixel array
+	sw $0, ($t3)		# store 0 to erase
+	
+	addi $t5, $t5, 8		# update index
+	bne $t4, $t5, eraseObs2		# looping condition
+
+# start to erase obstacle 3
+	la $t1, currObs3Loc	# get current location of obstacle 3
+	lw $t1, ($t1)
+	la $t2, obs1		# get obstacle 1
+	
+	add $t3, $t1, $t0	# calculate offset to erase obstacle 3
+	li $t4, OBS1_LEN	# get length of obs1
+	
+	li $t5, 0		# index
+
+# erase obstacle 1 COULD HAVE BUG SINCE CURRENT LOCATION STARTS OFF AT 0
+eraseObs3:
+	add $t6, $t5, $t2	# calculate offset
+	lw $t7, ($t6)		# get pixel location
+	
+	add $t3, $t3, $t7	# get offset for pixel array
+	sw $0, ($t3)		# store 0 to erase
+	
+	addi $t5, $t5, 8		# update index
+	bne $t4, $t5, eraseObs3		# looping condition
 	
 	jr $ra			# return
 	
@@ -253,6 +580,8 @@ shipLoop:
 	addi $t7, $t7, 8	# update index
 	bne $t7, $t2, shipLoop	# looping condition	
 
+# start drawing obstacle 1
+
 	li $t0, BASE_ADDRESS	# get the base address
 	la $t1, newObs1Loc	# get the new location of the obstacle
 	lw $t2, ($t1)
@@ -268,7 +597,7 @@ shipLoop:
 	li $t7, 0		# set index
 	
 obs1Loop:
-	add $t8, $t4, $t7	# offset for obstacle 1 array
+	add $t8, $t5, $t7	# offset for obstacle 1 array
 	lw $t9, ($t8)		# location of pixel
 	lw $t1, 4($t8)		# color of pixel
 	
@@ -278,7 +607,59 @@ obs1Loop:
 	addi $t7, $t7, 8	# update index
 	bne $t7, $t6, obs1Loop	# looping condition
 	
+# start drawing obstacle 2
+
+	li $t0, BASE_ADDRESS	# get the base address
+	la $t1, newObs2Loc	# get the new location of the obstacle
+	lw $t2, ($t1)
 	
+	la $t3, currObs2Loc	# get the current location of the obstacle
+	sw $t2, ($t3)		# set current location of the obstacle to be the new location of the obstacle
+	
+	add $t4, $t0, $t2	# calculate offset
+	
+	la $t5, obs1		# get obstacle 1
+	li $t6, OBS1_LEN	# get the length of obstacle 1 array
+	
+	li $t7, 0		# set index
+	
+obs2Loop:
+	add $t8, $t5, $t7	# offset for obstacle 1 array
+	lw $t9, ($t8)		# location of pixel
+	lw $t1, 4($t8)		# color of pixel
+	
+	add $t4, $t4, $t9	# calculate offset for pixel array
+	sw $t1, ($t4)		# set color of pixel
+	
+	addi $t7, $t7, 8	# update index
+	bne $t7, $t6, obs2Loop	# looping condition
+	
+# start drawing obstacle 3
+	
+	li $t0, BASE_ADDRESS	# get the base address
+	la $t1, newObs3Loc	# get the new location of the obstacle
+	lw $t2, ($t1)
+	
+	la $t3, currObs3Loc	# get the current location of the obstacle
+	sw $t2, ($t3)		# set current location of the obstacle to be the new location of the obstacle
+	
+	add $t4, $t0, $t2	# calculate offset
+	
+	la $t5, obs1		# get obstacle 1
+	li $t6, OBS1_LEN	# get the length of obstacle 1 array
+	
+	li $t7, 0		# set index
+	
+obs3Loop:
+	add $t8, $t5, $t7	# offset for obstacle 1 array
+	lw $t9, ($t8)		# location of pixel
+	lw $t1, 4($t8)		# color of pixel
+	
+	add $t4, $t4, $t9	# calculate offset for pixel array
+	sw $t1, ($t4)		# set color of pixel
+	
+	addi $t7, $t7, 8	# update index
+	bne $t7, $t6, obs3Loop	# looping condition
 	
 	jr $ra			# return
 
