@@ -14,27 +14,26 @@
 #
 # Which milestones have been reached in this submission?
 # (See the assignment handout for descriptions of the milestones)
-# - Milestone 1/2/3/4 (choose the one the applies)
+# - Milestone 4 (choose the one the applies)
 #
 # Which approved features have been implemented for milestone 4?
 # (See the assignment handout for the list of additional features)
-# 1. (fill in the feature, if any)
-# 2. (fill in the feature, if any)
-# 3. (fill in the feature, if any)
-# ... (add more if necessary)
+# 1. Smooth Graphics
+# 2. Increase in difficulty
+# 3. Scoring system
 #
 # Link to video demonstration for final submission:
 # - (insert YouTube / MyMedia / other URL here). Make sure we can view it!
 #
 # Are you OK with us sharing the video with people outside course staff?
-# - yes / no/ yes, and please share this project githublink as well!
+# - yes, and please share this project githublink as well! 
 #
 # Any additional information that the TA needs to know:
-# - (write here, if any)
+# - None
 ######################################################################
 
 .eqv	BASE_ADDRESS	0x10008000
-.eqv	SLEEP_TIME	40
+.eqv	SLEEP_TIME	50
 .eqv	SHIP_LEN	80
 .eqv	OBS1_LEN	40
 
@@ -60,8 +59,6 @@ newObs2Loc: 	.word	0
 currObs3Loc: 	.word	0
 newObs3Loc: 	.word 	0
 
-
-
 .text
 
 .globl main
@@ -71,6 +68,9 @@ main:
 	li $t1, 0		# index
 	li $t2, 4		# increment
 	li $t3, 4096		# total length
+	li $s1, SLEEP_TIME	# get the sleep time
+	li $s2, 0		# frame counter
+	li $s3, 0		# score counter
 	
 clear:
 	add $t4, $t0, $t1	# calculate offset
@@ -99,8 +99,24 @@ main_loop:
 	
 	beq $0, $s0, end	# lives are at 0, game over
 	
-	li $v0, 32		# sleep for SLEEP_TIME
-	li $a0, SLEEP_TIME
+	li $t9, 100		
+	beq $t9, $s2, inDif	# every 100 frames, increase difficulty
+	
+	li $v0, 32		# sleep for sleep time
+	move $a0, $s1
+	syscall
+	
+	addi $s2, $s2, 1
+	addi $s3, $s3, 1
+	
+	j main_loop		# loop back
+	
+inDif:
+	li $s2, 0		# reset frame counter
+	subi $s1, $s1, 2
+	
+	li $v0, 32		# sleep for sleep time
+	move $a0, $s1
 	syscall
 	
 	j main_loop		# loop back
@@ -826,6 +842,708 @@ returnDraw:
 
 # game over
 end:
+	li $a1, 0		# update parameter of eraseall
+	jal eraseall		# erase everything on the screen
 	
-	li $v0, 10
+	li $t0, BASE_ADDRESS	# get base address of display
+	la $t2, currShipLoc	# get current ship location
+	lw $t2, ($t2)
+	add $t5, $t0, $t2	# calculate offset to erase ship
+	la $t3, ship		# get address of ship
+	li $t4, SHIP_LEN	# get length of ship array
+	li $t1, 0		# index
+
+# erases the ship
+eraseShipEnd:
+	add $t6, $t1, $t3	# calculate offset
+	lw $t7, ($t6)		# get pixel location
+	
+	add $t5, $t5, $t7	# get offset for pixel array
+	sw $0, ($t5)		# store 0 into array to erase
+	
+	addi $t1, $t1, 8		# update index
+	bne $t4, $t1, eraseShipEnd	# looping condition
+	
+	# display game over sign
+	li $t9, 0xffffff
+	
+	# G
+	sw $t9, 1048($t0)
+	sw $t9, 1052($t0)
+	sw $t9, 1056($t0)
+	sw $t9, 1172($t0)
+	sw $t9, 1300($t0)
+	sw $t9, 1428($t0)
+	sw $t9, 1560($t0)
+	sw $t9, 1564($t0)
+	sw $t9, 1568($t0)
+	sw $t9, 1440($t0)
+	sw $t9, 1312($t0)
+	sw $t9, 1308($t0)
+	
+	# A
+	sw $t9, 1192($t0)
+	sw $t9, 1320($t0)
+	sw $t9, 1448($t0)
+	sw $t9, 1576($t0)
+	sw $t9, 1068($t0)
+	sw $t9, 1072($t0)
+	sw $t9, 1204($t0)
+	sw $t9, 1332($t0)
+	sw $t9, 1460($t0)
+	sw $t9, 1588($t0)
+	sw $t9, 1324($t0)
+	sw $t9, 1328($t0)
+	
+	# M
+	sw $t9, 1084($t0)
+	sw $t9, 1212($t0)
+	sw $t9, 1340($t0)
+	sw $t9, 1468($t0)
+	sw $t9, 1596($t0)
+	sw $t9, 1216($t0)
+	sw $t9, 1348($t0)
+	sw $t9, 1224($t0)
+	sw $t9, 1100($t0)
+	sw $t9, 1228($t0)
+	sw $t9, 1356($t0)
+	sw $t9, 1484($t0)
+	sw $t9, 1612($t0)
+	
+	# E
+	sw $t9, 1108($t0)
+	sw $t9, 1236($t0)
+	sw $t9, 1364($t0)
+	sw $t9, 1492($t0)
+	sw $t9, 1620($t0)
+	sw $t9, 1112($t0)
+	sw $t9, 1116($t0)
+	sw $t9, 1120($t0)
+	sw $t9, 1368($t0)
+	sw $t9, 1372($t0)
+	sw $t9, 1624($t0)
+	sw $t9, 1628($t0)
+	sw $t9, 1632($t0)
+	
+	# O
+	sw $t9, 1940($t0)
+	sw $t9, 2068($t0)
+	sw $t9, 2196($t0)
+	sw $t9, 1816($t0)
+	sw $t9, 1820($t0)
+	sw $t9, 1952($t0)
+	sw $t9, 2080($t0)
+	sw $t9, 2208($t0)
+	sw $t9, 2328($t0)
+	sw $t9, 2332($t0)
+	
+	# V
+	sw $t9, 1832($t0)
+	sw $t9, 1960($t0)
+	sw $t9, 2088($t0)
+	sw $t9, 2220($t0)
+	sw $t9, 2352($t0)
+	sw $t9, 2228($t0)
+	sw $t9, 1848($t0)
+	sw $t9, 1976($t0)
+	sw $t9, 2104($t0)
+	
+	# 2nd E
+	sw $t9, 1856($t0)
+	sw $t9, 1984($t0)
+	sw $t9, 2112($t0)
+	sw $t9, 2240($t0)
+	sw $t9, 2368($t0)
+	sw $t9, 1860($t0)
+	sw $t9, 1864($t0)
+	sw $t9, 1868($t0)
+	sw $t9, 2116($t0)
+	sw $t9, 2120($t0)
+	sw $t9, 2372($t0)
+	sw $t9, 2376($t0)
+	sw $t9, 2380($t0)
+	
+	# R
+	sw $t9, 1876($t0)
+	sw $t9, 2004($t0)
+	sw $t9, 2132($t0)
+	sw $t9, 2260($t0)
+	sw $t9, 2388($t0)
+	sw $t9, 1880($t0)
+	sw $t9, 1884($t0)
+	sw $t9, 2016($t0)
+	sw $t9, 2136($t0)
+	sw $t9, 2140($t0)
+	sw $t9, 2144($t0)
+	sw $t9, 2268($t0)
+	sw $t9, 2400($t0)
+	
+	# S
+	sw $t9, 2588($t0)
+	sw $t9, 2712($t0)
+	sw $t9, 2844($t0)
+	sw $t9, 2968($t0)
+	
+	# C
+	sw $t9, 2600($t0)
+	sw $t9, 2724($t0)
+	sw $t9, 2852($t0)
+	sw $t9, 2984($t0)
+	
+	# O
+	sw $t9, 2612($t0)
+	sw $t9, 2736($t0)
+	sw $t9, 2864($t0)
+	sw $t9, 2744($t0)
+	sw $t9, 2872($t0)
+	sw $t9, 2996($t0)
+	
+	# R
+	sw $t9, 2752($t0)
+	sw $t9, 2880($t0)
+	sw $t9, 3008($t0)
+	sw $t9, 2628($t0)
+	sw $t9, 2760($t0)
+	sw $t9, 2884($t0)
+	sw $t9, 3016($t0)
+	
+	# E
+	sw $t9, 2768($t0)
+	sw $t9, 2896($t0)
+	sw $t9, 2644($t0)
+	sw $t9, 2776($t0)
+	sw $t9, 2900($t0)
+	sw $t9, 3024($t0)
+	sw $t9, 3156($t0)
+	sw $t9, 3160($t0)
+	
+	# :
+	sw $t9, 2784($t0)
+	sw $t9, 3040($t0)
+	
+	# calculate score and display it
+	li $t8, 100
+	div $s3, $t8
+	mflo $t7		# first digit
+	mfhi $t6
+	
+	li $t8, 10
+	div $t6, $t8
+	mflo $t6		# second digit
+	mfhi $t5		# last digit
+	
+	li $t3, 3352		# location to draw
+	
+	li $t4, 0
+	beq $t4, $t7, zero1
+	
+	li $t4, 1
+	beq $t4, $t7, one1
+	
+	li $t4, 2
+	beq $t4, $t7, two1
+	
+	li $t4, 3
+	beq $t4, $t7, three1
+	
+	li $t4, 4
+	beq $t4, $t7, four1
+	
+	li $t4, 5
+	beq $t4, $t7, five1
+	
+	li $t4, 6
+	beq $t4, $t7, six1
+	
+	li $t4, 7
+	beq $t4, $t7, seven1
+	
+	li $t4, 8
+	beq $t4, $t7, eight1
+	
+	li $t4, 9
+	beq $t4, $t7, nine1
+
+# draw 0
+zero1:
+	add $t2, $t0, $t3
+	sw $t9, ($t2)
+	sw $t9, 4($t2)
+	sw $t9, 8($t2)
+	sw $t9, 128($t2)
+	sw $t9, 136($t2)
+	sw $t9, 256($t2)
+	sw $t9, 264($t2)
+	sw $t9, 384($t2)
+	sw $t9, 388($t2)
+	sw $t9, 392($t2)
+	j secondNum
+	
+# draw 1
+one1:
+	add $t2, $t0, $t3
+	sw $t9, ($t2)
+	sw $t9, 128($t2)
+	sw $t9, 256($t2)
+	sw $t9, 384($t2)
+	j secondNum
+	
+# draw 2
+two1:
+	add $t2, $t0, $t3
+	sw $t9, ($t2)
+	sw $t9, 4($t2)
+	sw $t9, 8($t2)
+	sw $t9, 136($t2)
+	sw $t9, 260($t2)
+	sw $t9, 384($t2)
+	sw $t9, 388($t2)
+	sw $t9, 392($t2)
+	j secondNum
+
+# draw 3
+three1:
+	add $t2, $t0, $t3
+	sw $t9, ($t2)
+	sw $t9, 132($t2)
+	sw $t9, 256($t2)
+	sw $t9, 388($t2)
+	sw $t9, 512($t2)
+	j ending
+	
+# draw 4
+four1:
+	add $t2, $t0, $t3
+	sw $t9, ($t2)
+	sw $t9, 128($t2)
+	sw $t9, 256($t2)
+	sw $t9, 260($t2)
+	sw $t9, 8($t2)
+	sw $t9, 136($t2)
+	sw $t9, 264($t2)
+	sw $t9, 392($t2)
+	j secondNum
+	
+# draw 5
+five1:
+	add $t2, $t0, $t3
+	sw $t9, ($t2)
+	sw $t9, 128($t2)
+	sw $t9, 260($t2)
+	sw $t9, 4($t2)
+	sw $t9, 8($t2)
+	sw $t9, 392($t2)
+	sw $t9, 516($t2)
+	sw $t9, 512($t2)
+	j secondNum
+	
+# draw 6
+six1:
+	add $t2, $t0, $t3
+	sw $t9, ($t2)
+	sw $t9, 4($t2)
+	sw $t9, 8($t2)
+	sw $t9, 128($t2)
+	sw $t9, 256($t2)
+	sw $t9, 260($t2)
+	sw $t9, 264($t2)
+	sw $t9, 384($t2)
+	sw $t9, 392($t2)
+	sw $t9, 512($t2)
+	sw $t9, 516($t2)
+	sw $t9, 520($t2)
+	j secondNum
+	
+# draw 7
+seven1:
+	add $t2, $t0, $t3
+	sw $t9, ($t2)
+	sw $t9, 4($t2)
+	sw $t9, 8($t2)
+	sw $t9, 136($t2)
+	sw $t9, 260($t2)
+	sw $t9, 384($t2)
+	j secondNum
+	
+# draw 8
+eight1:
+	add $t2, $t0, $t3
+	sw $t9, ($t2)
+	sw $t9, 4($t2)
+	sw $t9, 8($t2)
+	sw $t9, 128($t2)
+	sw $t9, 136($t2)
+	sw $t9, 256($t2)
+	sw $t9, 260($t2)
+	sw $t9, 264($t2)
+	sw $t9, 384($t2)
+	sw $t9, 392($t2)
+	sw $t9, 512($t2)
+	sw $t9, 516($t2)
+	sw $t9, 520($t2)
+	j secondNum
+	
+# draw 9
+nine1:
+	add $t2, $t0, $t3
+	sw $t9, ($t2)
+	sw $t9, 4($t2)
+	sw $t9, 8($t2)
+	sw $t9, 128($t2)
+	sw $t9, 136($t2)
+	sw $t9, 256($t2)
+	sw $t9, 260($t2)
+	sw $t9, 264($t2)
+	sw $t9, 392($t2)
+	sw $t9, 512($t2)
+	sw $t9, 516($t2)
+	sw $t9, 520($t2)
+	j ending
+
+	
+secondNum:
+	li $t3, 3368		# location to draw
+	
+	li $t4, 0
+	beq $t4, $t6, zero2
+	
+	li $t4, 1
+	beq $t4, $t6, one2
+	
+	li $t4, 2
+	beq $t4, $t6, two2
+	
+	li $t4, 3
+	beq $t4, $t6, three2
+	
+	li $t4, 4
+	beq $t4, $t6, four2
+	
+	li $t4, 5
+	beq $t4, $t6, five2
+	
+	li $t4, 6
+	beq $t4, $t6, six2
+	
+	li $t4, 7
+	beq $t4, $t6, seven2
+	
+	li $t4, 8
+	beq $t4, $t6, eight2
+	
+	li $t4, 9
+	beq $t4, $t6, nine2
+
+# draw 0
+zero2:
+	add $t2, $t0, $t3
+	sw $t9, ($t2)
+	sw $t9, 4($t2)
+	sw $t9, 8($t2)
+	sw $t9, 128($t2)
+	sw $t9, 136($t2)
+	sw $t9, 256($t2)
+	sw $t9, 264($t2)
+	sw $t9, 384($t2)
+	sw $t9, 388($t2)
+	sw $t9, 392($t2)
+	j thirdNum
+	
+# draw 1
+one2:
+	add $t2, $t0, $t3
+	sw $t9, ($t2)
+	sw $t9, 128($t2)
+	sw $t9, 256($t2)
+	sw $t9, 384($t2)
+	j thirdNum
+	
+# draw 2
+two2:
+	add $t2, $t0, $t3
+	sw $t9, ($t2)
+	sw $t9, 4($t2)
+	sw $t9, 8($t2)
+	sw $t9, 136($t2)
+	sw $t9, 260($t2)
+	sw $t9, 384($t2)
+	sw $t9, 388($t2)
+	sw $t9, 392($t2)
+	j thirdNum
+
+# draw 3
+three2:
+	add $t2, $t0, $t3
+	sw $t9, ($t2)
+	sw $t9, 132($t2)
+	sw $t9, 256($t2)
+	sw $t9, 388($t2)
+	sw $t9, 512($t2)
+	j ending
+	
+# draw 4
+four2:
+	add $t2, $t0, $t3
+	sw $t9, ($t2)
+	sw $t9, 128($t2)
+	sw $t9, 256($t2)
+	sw $t9, 260($t2)
+	sw $t9, 8($t2)
+	sw $t9, 136($t2)
+	sw $t9, 264($t2)
+	sw $t9, 392($t2)
+	j thirdNum
+	
+# draw 5
+five2:
+	add $t2, $t0, $t3
+	sw $t9, ($t2)
+	sw $t9, 128($t2)
+	sw $t9, 260($t2)
+	sw $t9, 4($t2)
+	sw $t9, 8($t2)
+	sw $t9, 392($t2)
+	sw $t9, 516($t2)
+	sw $t9, 512($t2)
+	j thirdNum
+	
+# draw 6
+six2:
+	add $t2, $t0, $t3
+	sw $t9, ($t2)
+	sw $t9, 4($t2)
+	sw $t9, 8($t2)
+	sw $t9, 128($t2)
+	sw $t9, 256($t2)
+	sw $t9, 260($t2)
+	sw $t9, 264($t2)
+	sw $t9, 384($t2)
+	sw $t9, 392($t2)
+	sw $t9, 512($t2)
+	sw $t9, 516($t2)
+	sw $t9, 520($t2)
+	j thirdNum
+	
+# draw 7
+seven2:
+	add $t2, $t0, $t3
+	sw $t9, ($t2)
+	sw $t9, 4($t2)
+	sw $t9, 8($t2)
+	sw $t9, 136($t2)
+	sw $t9, 260($t2)
+	sw $t9, 384($t2)
+	j thirdNum
+	
+# draw 8
+eight2:
+	add $t2, $t0, $t3
+	sw $t9, ($t2)
+	sw $t9, 4($t2)
+	sw $t9, 8($t2)
+	sw $t9, 128($t2)
+	sw $t9, 136($t2)
+	sw $t9, 256($t2)
+	sw $t9, 260($t2)
+	sw $t9, 264($t2)
+	sw $t9, 384($t2)
+	sw $t9, 392($t2)
+	sw $t9, 512($t2)
+	sw $t9, 516($t2)
+	sw $t9, 520($t2)
+	j thirdNum
+	
+# draw 9
+nine2:
+	add $t2, $t0, $t3
+	sw $t9, ($t2)
+	sw $t9, 4($t2)
+	sw $t9, 8($t2)
+	sw $t9, 128($t2)
+	sw $t9, 136($t2)
+	sw $t9, 256($t2)
+	sw $t9, 260($t2)
+	sw $t9, 264($t2)
+	sw $t9, 392($t2)
+	sw $t9, 512($t2)
+	sw $t9, 516($t2)
+	sw $t9, 520($t2)
+	j ending
+
+thirdNum:
+	li $t3, 3384		# location to draw
+	
+	li $t4, 0
+	beq $t4, $t5, zero3
+	
+	li $t4, 1
+	beq $t4, $t5, one3
+	
+	li $t4, 2
+	beq $t4, $t5, two3
+	
+	li $t4, 3
+	beq $t4, $t5, three3
+	
+	li $t4, 4
+	beq $t4, $t5, four3
+	
+	li $t4, 5
+	beq $t4, $t5, five3
+	
+	li $t4, 6
+	beq $t4, $t5, six3
+	
+	li $t4, 7
+	beq $t4, $t5, seven3
+	
+	li $t4, 8
+	beq $t4, $t5, eight3
+	
+	li $t4, 9
+	beq $t4, $t5, nine3
+	
+# draw 0
+zero3:
+	add $t2, $t0, $t3
+	sw $t9, ($t2)
+	sw $t9, 4($t2)
+	sw $t9, 8($t2)
+	sw $t9, 128($t2)
+	sw $t9, 136($t2)
+	sw $t9, 256($t2)
+	sw $t9, 264($t2)
+	sw $t9, 384($t2)
+	sw $t9, 388($t2)
+	sw $t9, 392($t2)
+	j ending
+	
+# draw 1
+one3:
+	add $t2, $t0, $t3
+	sw $t9, ($t2)
+	sw $t9, 128($t2)
+	sw $t9, 256($t2)
+	sw $t9, 384($t2)
+	j ending
+	
+# draw 2
+two3:
+	add $t2, $t0, $t3
+	sw $t9, ($t2)
+	sw $t9, 4($t2)
+	sw $t9, 8($t2)
+	sw $t9, 136($t2)
+	sw $t9, 260($t2)
+	sw $t9, 384($t2)
+	sw $t9, 388($t2)
+	sw $t9, 392($t2)
+	j ending
+
+# draw 3
+three3:
+	add $t2, $t0, $t3
+	sw $t9, ($t2)
+	sw $t9, 132($t2)
+	sw $t9, 256($t2)
+	sw $t9, 388($t2)
+	sw $t9, 512($t2)
+	j ending
+	
+# draw 4
+four3:
+	add $t2, $t0, $t3
+	sw $t9, ($t2)
+	sw $t9, 128($t2)
+	sw $t9, 256($t2)
+	sw $t9, 260($t2)
+	sw $t9, 8($t2)
+	sw $t9, 136($t2)
+	sw $t9, 264($t2)
+	sw $t9, 392($t2)
+	j ending
+	
+# draw 5
+five3:
+	add $t2, $t0, $t3
+	sw $t9, ($t2)
+	sw $t9, 128($t2)
+	sw $t9, 260($t2)
+	sw $t9, 4($t2)
+	sw $t9, 8($t2)
+	sw $t9, 392($t2)
+	sw $t9, 516($t2)
+	sw $t9, 512($t2)
+	j ending
+	
+# draw 6
+six3:
+	add $t2, $t0, $t3
+	sw $t9, ($t2)
+	sw $t9, 4($t2)
+	sw $t9, 8($t2)
+	sw $t9, 128($t2)
+	sw $t9, 256($t2)
+	sw $t9, 260($t2)
+	sw $t9, 264($t2)
+	sw $t9, 384($t2)
+	sw $t9, 392($t2)
+	sw $t9, 512($t2)
+	sw $t9, 516($t2)
+	sw $t9, 520($t2)
+	j ending
+	
+# draw 7
+seven3:
+	add $t2, $t0, $t3
+	sw $t9, ($t2)
+	sw $t9, 4($t2)
+	sw $t9, 8($t2)
+	sw $t9, 136($t2)
+	sw $t9, 260($t2)
+	sw $t9, 384($t2)
+	j ending
+	
+# draw 8
+eight3:
+	add $t2, $t0, $t3
+	sw $t9, ($t2)
+	sw $t9, 4($t2)
+	sw $t9, 8($t2)
+	sw $t9, 128($t2)
+	sw $t9, 136($t2)
+	sw $t9, 256($t2)
+	sw $t9, 260($t2)
+	sw $t9, 264($t2)
+	sw $t9, 384($t2)
+	sw $t9, 392($t2)
+	sw $t9, 512($t2)
+	sw $t9, 516($t2)
+	sw $t9, 520($t2)
+	j ending
+	
+# draw 9
+nine3:
+	add $t2, $t0, $t3
+	sw $t9, ($t2)
+	sw $t9, 4($t2)
+	sw $t9, 8($t2)
+	sw $t9, 128($t2)
+	sw $t9, 136($t2)
+	sw $t9, 256($t2)
+	sw $t9, 260($t2)
+	sw $t9, 264($t2)
+	sw $t9, 392($t2)
+	sw $t9, 512($t2)
+	sw $t9, 516($t2)
+	sw $t9, 520($t2)
+	j ending
+	
+ending:
+	jal keypress_check
+	
+	li $v0, 32		# sleep for sleep time
+	li $a0, SLEEP_TIME
 	syscall
+	
+	j end
