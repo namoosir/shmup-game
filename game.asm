@@ -12,9 +12,8 @@
 # - Display height in pixels: 256 
 # - Base Address for Display: 0x10008000 ($gp)
 #
-# Which milestones have been reached in this submission?
-# (See the assignment handout for descriptions of the milestones)
-# - Milestone 4 (choose the one the applies)
+# Which milestones have been reached in this submission
+# - Milestone 4
 #
 # Which approved features have been implemented for milestone 4?
 # (See the assignment handout for the list of additional features)
@@ -23,10 +22,10 @@
 # 3. Scoring system
 #
 # Link to video demonstration for final submission:
-# - (insert YouTube / MyMedia / other URL here). Make sure we can view it!
+# - https://play.library.utoronto.ca/a1e079871fd09a28fdf72a2854c18247
 #
 # Are you OK with us sharing the video with people outside course staff?
-# - yes, and please share this project githublink as well! 
+# - yes, and please share this project githublink as well! https://github.com/namoosir/shmup-game
 #
 # Any additional information that the TA needs to know:
 # - None
@@ -1109,7 +1108,7 @@ three1:
 	sw $t9, 256($t2)
 	sw $t9, 388($t2)
 	sw $t9, 512($t2)
-	j ending
+	j secondNum
 	
 # draw 4
 four1:
@@ -1198,7 +1197,7 @@ nine1:
 	sw $t9, 512($t2)
 	sw $t9, 516($t2)
 	sw $t9, 520($t2)
-	j ending
+	j secondNum
 
 	
 secondNum:
@@ -1279,7 +1278,7 @@ three2:
 	sw $t9, 256($t2)
 	sw $t9, 388($t2)
 	sw $t9, 512($t2)
-	j ending
+	j thirdNum
 	
 # draw 4
 four2:
@@ -1368,7 +1367,7 @@ nine2:
 	sw $t9, 512($t2)
 	sw $t9, 516($t2)
 	sw $t9, 520($t2)
-	j ending
+	j thirdNum
 
 thirdNum:
 	li $t3, 3384		# location to draw
